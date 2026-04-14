@@ -157,3 +157,6 @@ intellijPlatformTesting {
         }
     }
 }
+
+tasks.named("instrumentCode") { enabled = false }
+tasks.named("instrumentTestCode") { enabled = false }

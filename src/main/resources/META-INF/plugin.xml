@@ -1,15 +1,21 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
     <id>com.github.vardanmkrtchyann.threadpredictorplugin</id>
-    <name>thread-predictor-plugin</name>
+    <name>Thread-Predictor</name>
     <vendor>vardanmkrtchyann</vendor>
 
     <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.java</depends>
 
     <resource-bundle>messages.MyBundle</resource-bundle>
 
     <extensions defaultExtensionNs="com.intellij">
-        <toolWindow factoryClass="com.github.vardanmkrtchyann.threadpredictorplugin.toolWindow.MyToolWindowFactory" id="MyToolWindow"/>
-        <postStartupActivity implementation="com.github.vardanmkrtchyann.threadpredictorplugin.startup.MyProjectActivity" />
+        <notificationGroup id="Custom Notification Group" displayType="BALLOON"/>
+
+        <intentionAction>
+            <className>com.github.vardanmkrtchyann.threadpredictorplugin.actions.PredictorIntention</className>
+        </intentionAction>
     </extensions>
+
+
 </idea-plugin>
