@@ -49,6 +49,6 @@ Large Language Model inference introduces high latency.
 
 1. Inside the Sandbox IDE, open or create a Java file.
 2. Write a multithreaded execution block (e.g., `new Thread(() -> System.out.println("Hello")).start();`).
-3. A Lightning Bolt icon will automatically appear in the left-hand gutter next to the `.start()` call.
+3. An icon will automatically appear in the left-hand gutter next to the `.start()` call.
 4. Click the icon. 
 5. A progress bar will appear at the bottom of the IDE, followed by a notification balloon detailing the Thread Safety status, precise output predictions, and the execution trace.
