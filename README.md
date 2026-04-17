@@ -1,52 +1,54 @@
-# thread-predictor-plugin
+# AI Thread Predictor - IntelliJ IDEA Plugin
 
-![Build](https://github.com/vardanmkrtchyann/thread-predictor-plugin/workflows/Build/badge.svg)
-[![Version](https://img.shields.io/jetbrains/plugin/v/MARKETPLACE_ID.svg)](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID)
-[![Downloads](https://img.shields.io/jetbrains/plugin/d/MARKETPLACE_ID.svg)](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID)
+An AI-powered IntelliJ IDEA plugin that acts as a deterministic JVM execution engine. It analyzes multithreaded Java code directly within the IDE, identifies race conditions, and maps thread interleaving to predict exact STDOUT outputs or final variable states.
 
-## Template ToDo list
-- [x] Create a new [IntelliJ Platform Plugin Template][template] project.
-- [ ] Get familiar with the [template documentation][template].
-- [ ] Adjust the [pluginGroup](./gradle.properties) and [pluginName](./gradle.properties), as well as the [id](./src/main/resources/META-INF/plugin.xml) and [sources package](./src/main/kotlin).
-- [ ] Adjust the plugin description in `README` (see [Tips][docs:plugin-description])
-- [ ] Review the [Legal Agreements](https://plugins.jetbrains.com/docs/marketplace/legal-agreements.html?from=IJPluginTemplate).
-- [ ] [Publish a plugin manually](https://plugins.jetbrains.com/docs/intellij/publishing-plugin.html?from=IJPluginTemplate) for the first time.
-- [ ] Set the `MARKETPLACE_ID` in the above README badges. You can obtain it once the plugin is published to JetBrains Marketplace.
-- [ ] Set the [Plugin Signing](https://plugins.jetbrains.com/docs/intellij/plugin-signing.html?from=IJPluginTemplate) related [secrets](https://github.com/JetBrains/intellij-platform-plugin-template#environment-variables).
-- [ ] Set the [Deployment Token](https://plugins.jetbrains.com/docs/marketplace/plugin-upload.html?from=IJPluginTemplate).
-- [ ] Click the <kbd>Watch</kbd> button on the top of the [IntelliJ Platform Plugin Template][template] to be notified about releases containing new features and fixes.
-- [ ] Configure the [CODECOV_TOKEN](https://docs.codecov.com/docs/quick-start) secret for automated test coverage reports on PRs
+## 🚀 Features
 
-<!-- Plugin description -->
-This Fancy IntelliJ Platform Plugin is going to be your implementation of the brilliant ideas that you have.
+* **Context-Aware UI (Zero Clutter):** Instead of spamming the user's right-click context menu, the plugin uses native JetBrains Gutter Icons (Lightning Bolt). The icon only appears next to valid concurrency triggers (e.g., `.start()`, `.submit()`, `synchronized`).
+* **Deep Context Extraction:** When triggered, the plugin extracts not just the isolated lambda or method, but the entire enclosing `PsiClass`. This ensures the AI has full visibility into shared state (like class-level `volatile` fields) required for accurate concurrency analysis.
+* **Asynchronous Processing:** Network calls to the LLM are strictly dispatched to background threads, guaranteeing zero IDE UI freezes.
 
-This specific section is a source for the [plugin.xml](/src/main/resources/META-INF/plugin.xml) file which will be extracted by the [Gradle](/build.gradle.kts) during the build process.
+## 🧠 Technical Decisions & Architecture
 
-To keep everything working, do not remove `<!-- ... -->` sections. 
-<!-- Plugin description end -->
+To align with JetBrains' plugin development best practices, several specific architectural choices were made:
 
-## Installation
+### 1. AST/PSI Traversal > String Matching
+To detect multithreaded code and place the Gutter Icon, the plugin does *not* rely on brittle Regex or string matching. Instead, it utilizes the Program Structure Interface (PSI).
+* It uses `JavaRecursiveElementWalkingVisitor` to traverse the AST.
+* It specifically targets `PsiMethodCallExpression` nodes matching threading signatures.
+* **Deep Resolution:** It resolves `PsiReferenceExpression` nodes to check if any variables accessed inside a method belong to fields declared with the `PsiModifier.VOLATILE` keyword. 
 
-- Using the IDE built-in plugin system:
+### 2. Event Dispatch Thread (EDT) Safety
+Large Language Model inference introduces high latency.
+* All network requests are wrapped in `Task.Backgroundable` to push the heavy lifting off the main UI thread.
+* Once the HTTP response is parsed, the plugin uses `ApplicationManager.getApplication().invokeLater()` to safely synchronize back to the EDT to render the `NotificationGroupManager` balloon.
 
-  <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>Marketplace</kbd> > <kbd>Search for "thread-predictor-plugin"</kbd> >
-  <kbd>Install</kbd>
+### 3. Model Selection & Prompt Engineering
+* **Model:** Powered by Google's **Gemini 2.5 Flash** API. This specific model was chosen over heavier models (like Pro) to optimize for low latency, which is critical for a responsive IDE developer experience.
+* **Prompting:** The system prompt forces the LLM out of a "conversational" state and strictly bounds it to act as a deterministic execution engine, returning heavily constrained, HTML-formatted thread interleaving traces (limited to 15 words) rather than verbose explanations.
 
-- Using JetBrains Marketplace:
+## 🛠️ Setup & Installation
 
-  Go to [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID) and install it by clicking the <kbd>Install to ...</kbd> button in case your IDE is running.
+### Prerequisites
+* IntelliJ IDEA (Community or Ultimate) 2023.2+
+* Java 17+
+* A Google Gemini API Key
 
-  You can also download the [latest release](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID/versions) from JetBrains Marketplace and install it manually using
-  <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>⚙️</kbd> > <kbd>Install plugin from disk...</kbd>
+### Configuration
+1. Clone this repository.
+2. Open the project in IntelliJ IDEA and allow Gradle to sync.
+3. Open `src/main/java/com/github/vardanmkrtchyann/threadpredictorplugin/services/GeminiService.java`.
+4. Locate the `API_KEY` constant and paste your Gemini API key (Note: In a production environment, this would be migrated to the JetBrains `PasswordSafe` secure credential store).
 
-- Manually:
+### Running the Plugin
+1. Open the Gradle tool window.
+2. Navigate to `Tasks` -> `intellij` -> `runIde`.
+3. Double-click to launch the Sandbox IDE.
 
-  Download the [latest release](https://github.com/vardanmkrtchyann/thread-predictor-plugin/releases/latest) and install it manually using
-  <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>⚙️</kbd> > <kbd>Install plugin from disk...</kbd>
+## 💡 Usage
 
-
----
-Plugin based on the [IntelliJ Platform Plugin Template][template].
-
-[template]: https://github.com/JetBrains/intellij-platform-plugin-template
-[docs:plugin-description]: https://plugins.jetbrains.com/docs/intellij/plugin-user-experience.html#plugin-description-and-presentation
+1. Inside the Sandbox IDE, open or create a Java file.
+2. Write a multithreaded execution block (e.g., `new Thread(() -> System.out.println("Hello")).start();`).
+3. A Lightning Bolt icon will automatically appear in the left-hand gutter next to the `.start()` call.
+4. Click the icon. 
+5. A progress bar will appear at the bottom of the IDE, followed by a notification balloon detailing the Thread Safety status, precise output predictions, and the execution trace.
