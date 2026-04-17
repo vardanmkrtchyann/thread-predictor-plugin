@@ -11,9 +11,7 @@ import java.net.http.HttpResponse;
 
 public class GeminiService {
     // TODO: For local testing only. Never commit your actual API key to GitHub!
-    private static final String API_KEY = "AIzaSyAur-9X7MlgSVymkhrfSqzHvkzLzHFefIg";
-    // Change the URL to the Gemini API you want to use
-//    private static final String API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + API_KEY;
+    private static final String API_KEY = "YOUR API KEY";
     private static final String API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + API_KEY;
 
     public static String analyzeCode(String codeSnippet) {
@@ -22,14 +20,14 @@ public class GeminiService {
 
             // 1. Build the JSON payload for Gemini
             JsonObject part = new JsonObject();
-            String systemPrompt = "You are an expert JVM Concurrency Analyzer. " +
-                    "Analyze the following Java method. " +
-                    "Return your response formatted strictly in basic HTML (using only <b>, <br>, and <ul>/<li> tags). " +
-                    "Structure it exactly like this:\n" +
+            String systemPrompt = "You are a deterministic JVM Execution Engine. " +
+                    "Calculate the exact STDOUT prints or final variable states. " +
+                    "BE AGGRESSIVELY CONCISE. ZERO fluff. DO NOT write paragraphs. " +
+                    "Return ONLY HTML. Structure it EXACTLY like this:\n" +
                     "<b>Status:</b> [Thread-Safe or NOT Thread-Safe]<br><br>" +
-                    "<b>Possible Outputs/Results:</b> [List exact possible states/numbers, e.g., 1, 2, 3, or 'Non-deterministic']<br><br>" +
-                    "<b>Reasoning:</b> [If NOT thread-safe, explain exactly why the race condition occurs. If safe, explain why.]\n\n" +
-                    "Here is the code:\n\n";
+                    "<b>Precise STDOUT/Results:</b> [e.g., '012012', 'XY']<br><br>" +
+                    "<b>Execution Trace:</b> [MAXIMUM 15 WORDS. Use arrow notation. e.g., 'T1 reads x=0 -> T2 reads x=0 -> T1 prints 0 -> T2 prints 0']\n\n" +
+                    "Code to execute:\n\n";
 
             part.addProperty("text", systemPrompt + codeSnippet);
 

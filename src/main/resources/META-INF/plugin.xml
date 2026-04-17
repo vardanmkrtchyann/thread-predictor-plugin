@@ -12,9 +12,8 @@
     <extensions defaultExtensionNs="com.intellij">
         <notificationGroup id="Custom Notification Group" displayType="BALLOON"/>
 
-        <intentionAction>
-            <className>com.github.vardanmkrtchyann.threadpredictorplugin.actions.PredictorIntention</className>
-        </intentionAction>
+        <codeInsight.lineMarkerProvider language="JAVA"
+                                        implementationClass="com.github.vardanmkrtchyann.threadpredictorplugin.actions.PredictorLineMarkerProvider"/>
     </extensions>
 
 
